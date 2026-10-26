@@ -44,12 +44,21 @@ app.wsgi_app = proxy_fix.ProxyFix(app.wsgi_app, x_proto=1)
 
 @app.route("/")
 def root():
-    """Renders the homepage with all ghost names, sorted by name."""
+    """Renders the homepage with all ghost names and their assigned users."""
     ghost_names = models.GhostName.query().order(models.GhostName.name).fetch()
+    user_keys = [ghost.user_id for ghost in ghost_names if ghost.user_id]
+    users = {user.key: user for user in ndb.get_multi(user_keys) if user}
+    current_user = signed_in_user()
+    current_ghost = current_user and next(
+        (g for g in ghost_names if g.key == current_user.ghost_name), None
+    )
     return flask.render_template(
         "index.html",
         ghost_names=ghost_names,
+        users=users,
         email=flask.session.get("email"),
+        current_user=current_user,
+        current_ghost=current_ghost,
     )
 
 
@@ -124,41 +133,106 @@ def enter_name():
             error=f"Names must be at most {MAX_NAME_LENGTH} characters.",
         ), 400
 
-    user.first_name = first_name
-    user.last_name = last_name
-    user.put()
+    save_name(user.key, first_name, last_name)
     return flask.redirect(flask.url_for("ghost_name_results"), 303)
 
 
-@app.route("/ghost-name-results")
-def ghost_name_results():
-    """Shows up to 3 available ghost names, formatted with the user's name."""
-    user = signed_in_user()
-    if not user:
-        return flask.redirect(flask.url_for("login"))
-    if not user.first_name or not user.last_name:
-        return flask.redirect(flask.url_for("enter_name"))
+@ndb.transactional()
+def save_name(user_key, first_name, last_name):
+    """Saves the user's name without overwriting a concurrent ghost name."""
+    user = user_key.get()
+    user.first_name = first_name
+    user.last_name = last_name
+    user.put()
 
+
+@ndb.transactional()
+def choose_ghost_name(user_key, ghost_key):
+    """Assigns ghost_key to the user, releasing their previous ghost name.
+
+    The user, the chosen ghost name and the previous one are all read by key
+    inside the transaction, so a ghost name can never be assigned to two users,
+    nor a user hold two ghost names.
+
+    Args:
+        user_key: Key of the user choosing a ghost name.
+        ghost_key: Key of the chosen ghost name.
+
+    Returns:
+        False if the ghost name no longer exists or belongs to another user.
+    """
+    user, ghost = ndb.get_multi([user_key, ghost_key])
+    if not ghost or (ghost.user_id and ghost.user_id != user_key):
+        return False
+
+    entities = [user, ghost]
+    if user.ghost_name and user.ghost_name != ghost_key:
+        previous = user.ghost_name.get()
+        if previous and previous.user_id == user_key:
+            previous.user_id = None
+            entities.append(previous)
+
+    ghost.user_id = user_key
+    user.ghost_name = ghost_key
+    ndb.put_multi(entities)
+    return True
+
+
+def render_results(user, error=None, status=200):
+    """Renders up to 3 random available ghost names and remembers the offer."""
     available = [
         ghost
         for ghost in models.GhostName.query().fetch()
         if not ghost.user_id
     ]
     options = random.sample(available, min(3, len(available)))
+    flask.session["offered_ghost_names"] = [ghost.key.id() for ghost in options]
     return flask.render_template(
         "ghost_name_results.html",
         options=[
-            f"{user.first_name} {ghost.name} {user.last_name}"
+            (ghost.key.id(), f"{user.first_name} {ghost.name} {user.last_name}")
             for ghost in options
         ],
-    )
+        error=error,
+    ), status
+
+
+@app.route("/ghost-name-results", methods=["GET", "POST"])
+def ghost_name_results():
+    """Offers up to 3 ghost names and assigns the one the user picks."""
+    user = signed_in_user()
+    if not user:
+        return flask.redirect(flask.url_for("login"))
+    if not user.first_name or not user.last_name:
+        return flask.redirect(flask.url_for("enter_name"))
+
+    if flask.request.method == "GET":
+        return render_results(user)
+
+    choice = flask.request.form.get("ghost_name")
+    if choice not in flask.session.get("offered_ghost_names", []):
+        return render_results(
+            user,
+            error="Please choose one of the ghost names shown.",
+            status=400,
+        )
+
+    if not choose_ghost_name(user.key, ndb.Key(models.GhostName, choice)):
+        return render_results(
+            user,
+            error="Sorry, that ghost name was just taken. Please choose again.",
+            status=409,
+        )
+
+    flask.session.pop("offered_ghost_names", None)
+    return flask.redirect(flask.url_for("root"), 303)
 
 
 @app.route("/logout", methods=["POST"])
 def logout():
     """Signs the user out."""
     flask.session.clear()
-    return flask.redirect(flask.url_for("root"))
+    return flask.redirect(flask.url_for("root"), 303)
 
 
 if __name__ == "__main__":

@@ -61,8 +61,20 @@ sign-ins.
 
 After entering their name, the user is redirected to `/ghost-name-results`,
 which shows up to 3 randomly chosen unassigned ghost names, each formatted as
-first name, ghost name, last name (e.g. "Ada Casper Lovelace").
-`GhostName.user_id` links a ghost name to the user it is assigned to.
+first name, ghost name, last name (e.g. "Ada Casper Lovelace"). The offered
+ghost names are remembered in the session, and the user picks one and submits.
+Only an offered ghost name is accepted (400 otherwise); if it was taken in the
+meantime the page shows fresh options (409). On success the user is
+redirected to the overview, which lists every ghost name with the name and
+email of the user who took it, and shows the signed-in user's current ghost
+name. Choosing again releases the user's previous ghost name.
+
+The assignment is stored on both sides, as `GhostName.user_id` and
+`User.ghost_name`, so it can be checked and changed in a single transaction
+that reads every entity involved by key: a ghost name is never given to two
+users, and a user never holds two ghost names. (Queries can't be used for
+this check, because Datastore only allows ancestor queries inside
+transactions.)
 
 ## Configuration
 

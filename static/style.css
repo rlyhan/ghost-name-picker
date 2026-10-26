@@ -18,3 +18,8 @@ body {
   font-family: "helvetica", sans-serif;
   text-align: center;
 }
+
+table {
+  margin: 0 auto;
+  max-width: 80vw;
+}

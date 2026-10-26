@@ -11,12 +11,26 @@
   <body>
     <h1>Your ghost names</h1>
 
+    {% if error %}
+    <p role="alert">{{ error }}</p>
+    {% endif %}
+
     {% if options %}
-    <ul>
-      {% for option in options %}
-      <li>{{ option }}</li>
+    <form method="post" action="{{ url_for('ghost_name_results') }}">
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+      {% for id, label in options %}
+      <p>
+        <input
+          type="radio"
+          id="ghost_name_{{ loop.index }}"
+          name="ghost_name"
+          value="{{ id }}"
+        />
+        <label for="ghost_name_{{ loop.index }}">{{ label }}</label>
+      </p>
       {% endfor %}
-    </ul>
+      <button type="submit">Submit</button>
+    </form>
     {% else %}
     <p>Sorry, all ghost names have been taken.</p>
     {% endif %}

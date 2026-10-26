@@ -31,7 +31,6 @@
     {% if email %}
     <form method="post" action="{{ url_for('logout') }}">
       <p>Signed in as {{ email }}</p>
-      <p><a href="{{ url_for('enter_name') }}">Enter your name</a></p>
       <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
       <button type="submit">Sign out</button>
     </form>
@@ -39,13 +38,45 @@
     <p><a href="{{ url_for('login') }}">Sign in with Google</a></p>
     {% endif %}
 
-    {% for ghost_name in ghost_names %}
-    <h2>{{ ghost_name.name }}</h2>
-    {% if ghost_name.description %}
-    <p>{{ ghost_name.description }}</p>
+    {% if current_ghost %}
+    <p>
+      Your ghost name: {{ current_user.first_name }} {{ current_ghost.name }}
+      {{ current_user.last_name }}
+    </p>
+    <p><a href="{{ url_for('enter_name') }}">Change your current Phantom name</a></p>
+    {% else %}
+    <p><a href="{{ url_for('enter_name') }}">Get a Phantom Name</a></p>
     {% endif %}
+
+    {% if ghost_names %}
+    <table>
+      <thead>
+        <tr>
+          <th>Ghost name</th>
+          <th>Assigned to</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ghost_name in ghost_names %}
+        {% set user = users.get(ghost_name.user_id) %}
+        <tr>
+          <td>
+            <strong>{{ ghost_name.name }}</strong>
+            {% if ghost_name.description %}
+            <p>{{ ghost_name.description }}</p>
+            {% endif %}
+          </td>
+          <td>
+            {% if user %}
+            {{ user.first_name }} {{ user.last_name }} ({{ user.email_address }})
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
     {% else %}
     <p>No ghost names yet.</p>
-    {% endfor %}
+    {% endif %}
   </body>
 </html>
