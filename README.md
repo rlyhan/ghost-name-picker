@@ -74,7 +74,9 @@ second argument limits how many rows are imported.
 python import_ghost_names.py path/to/ghost-names.csv [limit]
 ```
 
-The script writes to whichever Datastore the terminal is set up for:
+The script writes to whichever Datastore the terminal is set up for, and asks
+for confirmation after showing the target project and whether it is the
+emulator or production:
 
 - **Emulator:** run `$(gcloud beta emulators datastore env-init)` first.
 - **Production:** use a terminal without the emulator variables, then:

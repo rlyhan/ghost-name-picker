@@ -4,6 +4,7 @@ Usage: python import_ghost_names.py <csv_path> [limit]
 """
 
 import csv
+import os
 import sys
 
 from google.cloud import ndb
@@ -21,7 +22,18 @@ def main(csv_path, limit=None):
     with open(csv_path, newline="", encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))[:limit]
 
-    with ndb.Client().context():
+    client = ndb.Client()
+    emulator_host = os.environ.get("DATASTORE_EMULATOR_HOST")
+    target = f"emulator at {emulator_host}" if emulator_host else "PRODUCTION"
+    answer = input(
+        f"Import {len(rows)} rows into project {client.project} ({target})? "
+        "[y/N] "
+    )
+    if answer.strip().lower() != "y":
+        print("Aborted.")
+        return
+
+    with client.context():
         for row in rows:
             name = row["Ghost name"].strip()
             description = row["Description"].strip() or None
