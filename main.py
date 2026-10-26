@@ -1,22 +1,28 @@
-import datetime
-
 import securescaffold
 from flask import render_template
+from google.cloud import ndb
+
+from models import GhostName
 
 app = securescaffold.create_app(__name__)
+ndb_client = ndb.Client()
+
+
+def ndb_wsgi_middleware(wsgi_app):
+    def middleware(environ, start_response):
+        with ndb_client.context():
+            return wsgi_app(environ, start_response)
+
+    return middleware
+
+
+app.wsgi_app = ndb_wsgi_middleware(app.wsgi_app)
 
 
 @app.route("/")
 def root():
-    # For the sake of example, use static information to inflate the template.
-    # This will be replaced with real information in later steps.
-    dummy_times = [
-        datetime.datetime(2018, 1, 1, 10, 0, 0),
-        datetime.datetime(2018, 1, 2, 10, 30, 0),
-        datetime.datetime(2018, 1, 3, 11, 0, 0),
-    ]
-
-    return render_template("index.html", times=dummy_times)
+    ghost_names = GhostName.query().order(GhostName.name).fetch()
+    return render_template("index.html", ghost_names=ghost_names)
 
 
 if __name__ == "__main__":
