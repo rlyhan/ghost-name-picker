@@ -71,6 +71,12 @@ def auth_callback():
     if not userinfo.get("email_verified"):
         flask.abort(401)
 
+    models.User.get_or_insert(
+        userinfo["sub"],
+        google_auth_id=userinfo["sub"],
+        email_address=userinfo["email"],
+    )
+
     flask.session["google_auth_id"] = userinfo["sub"]
     flask.session["email"] = userinfo["email"]
     return flask.redirect(flask.url_for("root"))

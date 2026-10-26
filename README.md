@@ -52,6 +52,12 @@ is separate from the `name` property used for display. Renaming a ghost name
 therefore means creating a new entity. Create entities through
 `get_or_insert` with this key convention, not with auto-generated IDs.
 
+Each `User` is keyed by their Google account ID (the ID token's `sub` claim),
+which never changes, unlike the account's email address. Signing in calls
+`User.get_or_insert`, so a user is created on their first sign-in and reused
+afterwards. `first_name` and `last_name` are left empty at sign-in and are
+always populated manually. Existing users are not updated on later sign-ins.
+
 ## Configuration
 
 `settings.py` holds the app's settings and is loaded in production via
