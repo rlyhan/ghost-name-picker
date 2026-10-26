@@ -28,6 +28,16 @@
   <body>
     <h1>Ghost Name Picker</h1>
 
+    {% if email %}
+    <form method="post" action="{{ url_for('logout') }}">
+      <p>Signed in as {{ email }}</p>
+      <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
+      <button type="submit">Sign out</button>
+    </form>
+    {% else %}
+    <p><a href="{{ url_for('login') }}">Sign in with Google</a></p>
+    {% endif %}
+
     {% for ghost_name in ghost_names %}
     <h2>{{ ghost_name.name }}</h2>
     {% if ghost_name.description %}

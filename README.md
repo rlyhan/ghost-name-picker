@@ -36,10 +36,13 @@ Then, in the terminal you run the app from:
 
 ```sh
 $(gcloud beta emulators datastore env-init)
+export GOOGLE_CLIENT_SECRET=<client-secret>  # see "Google sign-in" below
 FLASK_SETTINGS_FILENAME=settings_dev.py python main.py
 ```
 
-Then open http://localhost:8080
+Then open http://localhost:8080. Use `localhost` rather than the
+`127.0.0.1` address the server prints, as the OAuth redirect URI is
+registered for `localhost`.
 
 ## Data model
 
@@ -51,16 +54,34 @@ therefore means creating a new entity. Create entities through
 
 ## Configuration
 
-Locally, `settings_dev.py` (loaded via `FLASK_SETTINGS_FILENAME`) sets
-`SECRET_KEY` and allows non-HTTPS cookies. It is excluded from deploys. In
-production, the scaffold generates a `SECRET_KEY` on first startup and stores
-it in Datastore as an `AppConfig` entity.
+`settings.py` holds the app's settings and is loaded in production via
+`FLASK_SETTINGS_FILENAME` in `app.yaml`. Locally, `settings_dev.py` imports
+it, sets `SECRET_KEY` and allows the CSRF cookie over plain HTTP; it is
+excluded from deploys. In production, the scaffold generates a `SECRET_KEY` on first startup
+and stores it in Datastore as an `AppConfig` entity.
+
+### Google sign-in
+
+Sign-in uses Google's server-side OAuth flow via Authlib, so no Google
+JavaScript runs on the page and the scaffold's Content Security Policy is
+unchanged. Create an OAuth client ID (type "Web application") under Google
+Auth Platform → Clients, with this authorised redirect URI:
+
+- `http://localhost:8080/auth/callback`
+
+The client ID is set as `GOOGLE_CLIENT_ID` in `settings.py`; it is not a
+secret. The client secret is read from the `GOOGLE_CLIENT_SECRET` environment
+variable when the app starts, so export it in the same terminal before
+starting the app. It must never be committed.
+
+The OAuth consent screen's audience is External and in Testing, so only
+accounts listed under Audience → Test users can sign in.
 
 ## Linting
 
 ```sh
 pip install -r requirements-dev.txt
-pylint main.py models.py import_ghost_names.py
+pylint main.py models.py import_ghost_names.py settings.py settings_dev.py
 ```
 
 ## Importing ghost names
@@ -95,3 +116,6 @@ gcloud app deploy
 
 The production Datastore starts empty, so run the import against production
 after the first deploy.
+
+Sign-in does not work in production yet: the client secret is only provided
+locally, and the production redirect URI is not registered.
