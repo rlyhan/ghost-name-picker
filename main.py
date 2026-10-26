@@ -1,8 +1,9 @@
 import datetime
 
-from flask import Flask, render_template
+import securescaffold
+from flask import render_template
 
-app = Flask(__name__)
+app = securescaffold.create_app(__name__)
 
 
 @app.route("/")

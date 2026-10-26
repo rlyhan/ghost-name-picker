@@ -2,3 +2,5 @@
 .git
 .gitignore
 #!include:.gitignore
+
+settings_dev.py

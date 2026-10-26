@@ -8,7 +8,7 @@ source env/bin/activate
 
 pip install -r requirements.txt
 
-python main.py
+FLASK_SETTINGS_FILENAME=settings_dev.py python main.py
 ```
 
 Then open http://localhost:8080
