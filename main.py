@@ -1,14 +1,17 @@
+"""Flask app that lists ghost names stored in Datastore."""
+
+import flask
 import securescaffold
-from flask import render_template
 from google.cloud import ndb
 
-from models import GhostName
+import models
 
 app = securescaffold.create_app(__name__)
 ndb_client = ndb.Client()
 
 
 def ndb_wsgi_middleware(wsgi_app):
+    """Wraps a WSGI app so every request runs inside an NDB context."""
     def middleware(environ, start_response):
         with ndb_client.context():
             return wsgi_app(environ, start_response)
@@ -21,8 +24,9 @@ app.wsgi_app = ndb_wsgi_middleware(app.wsgi_app)
 
 @app.route("/")
 def root():
-    ghost_names = GhostName.query().order(GhostName.name).fetch()
-    return render_template("index.html", ghost_names=ghost_names)
+    """Renders the homepage with all ghost names, sorted by name."""
+    ghost_names = models.GhostName.query().order(models.GhostName.name).fetch()
+    return flask.render_template("index.html", ghost_names=ghost_names)
 
 
 if __name__ == "__main__":

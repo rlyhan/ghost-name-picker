@@ -8,10 +8,16 @@ import sys
 
 from google.cloud import ndb
 
-from models import GhostName
+import models
 
 
 def main(csv_path, limit=None):
+    """Imports ghost names from a CSV, skipping names that already exist.
+
+    Args:
+        csv_path: Path to the CSV file.
+        limit: Maximum number of rows to import, or None for all rows.
+    """
     with open(csv_path, newline="", encoding="utf-8-sig") as f:
         rows = list(csv.DictReader(f))[:limit]
 
@@ -19,7 +25,9 @@ def main(csv_path, limit=None):
         for row in rows:
             name = row["Ghost name"].strip()
             description = row["Description"].strip() or None
-            GhostName.get_or_insert(name.lower(), name=name, description=description)
+            models.GhostName.get_or_insert(
+                name.lower(), name=name, description=description
+            )
             print(f"Imported {name}")
 
 

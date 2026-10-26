@@ -1,2 +1,8 @@
 [MAIN]
 ignore=env
+
+[FORMAT]
+max-line-length=80
+
+[MESSAGES CONTROL]
+disable=too-few-public-methods
