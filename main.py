@@ -1,5 +1,7 @@
 """Flask app that lists ghost names stored in Datastore."""
 
+import random
+
 import flask
 import securescaffold
 from authlib.integrations import base_client
@@ -80,6 +82,76 @@ def auth_callback():
     flask.session["google_auth_id"] = userinfo["sub"]
     flask.session["email"] = userinfo["email"]
     return flask.redirect(flask.url_for("root"))
+
+
+MAX_NAME_LENGTH = 100
+
+
+def signed_in_user():
+    """Returns the signed-in User, or None if nobody is signed in."""
+    google_auth_id = flask.session.get("google_auth_id")
+    return google_auth_id and models.User.get_by_id(google_auth_id)
+
+
+@app.route("/enter-name", methods=["GET", "POST"])
+def enter_name():
+    """Shows and saves the signed-in user's first and last name."""
+    user = signed_in_user()
+    if not user:
+        return flask.redirect(flask.url_for("login"))
+
+    if flask.request.method == "GET":
+        return flask.render_template(
+            "enter_name.html",
+            first_name=user.first_name or "",
+            last_name=user.last_name or "",
+        )
+
+    first_name = flask.request.form.get("first_name", "").strip()
+    last_name = flask.request.form.get("last_name", "").strip()
+    if not first_name or not last_name:
+        return flask.render_template(
+            "enter_name.html",
+            first_name=first_name,
+            last_name=last_name,
+            error="Please enter both your first name and last name.",
+        ), 400
+    if max(len(first_name), len(last_name)) > MAX_NAME_LENGTH:
+        return flask.render_template(
+            "enter_name.html",
+            first_name=first_name[:MAX_NAME_LENGTH],
+            last_name=last_name[:MAX_NAME_LENGTH],
+            error=f"Names must be at most {MAX_NAME_LENGTH} characters.",
+        ), 400
+
+    user.first_name = first_name
+    user.last_name = last_name
+    user.put()
+    return flask.redirect(flask.url_for("ghost_name_results"), 303)
+
+
+@app.route("/ghost-name-results")
+def ghost_name_results():
+    """Shows up to 3 available ghost names, formatted with the user's name."""
+    user = signed_in_user()
+    if not user:
+        return flask.redirect(flask.url_for("login"))
+    if not user.first_name or not user.last_name:
+        return flask.redirect(flask.url_for("enter_name"))
+
+    available = [
+        ghost
+        for ghost in models.GhostName.query().fetch()
+        if not ghost.user_id
+    ]
+    options = random.sample(available, min(3, len(available)))
+    return flask.render_template(
+        "ghost_name_results.html",
+        options=[
+            f"{user.first_name} {ghost.name} {user.last_name}"
+            for ghost in options
+        ],
+    )
 
 
 @app.route("/logout", methods=["POST"])

@@ -31,6 +31,7 @@
     {% if email %}
     <form method="post" action="{{ url_for('logout') }}">
       <p>Signed in as {{ email }}</p>
+      <p><a href="{{ url_for('enter_name') }}">Enter your name</a></p>
       <input type="hidden" name="_csrf_token" value="{{ csrf_token() }}" />
       <button type="submit">Sign out</button>
     </form>

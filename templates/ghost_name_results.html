@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Your ghost names - Ghost Name Picker</title>
+    <link
+      type="text/css"
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}"
+    />
+  </head>
+  <body>
+    <h1>Your ghost names</h1>
+
+    {% if options %}
+    <ul>
+      {% for option in options %}
+      <li>{{ option }}</li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p>Sorry, all ghost names have been taken.</p>
+    {% endif %}
+
+    <p><a href="{{ url_for('root') }}">Back to overview</a></p>
+  </body>
+</html>

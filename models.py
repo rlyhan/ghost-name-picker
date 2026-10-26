@@ -17,3 +17,4 @@ class GhostName(ndb.Model):
 
     name = ndb.StringProperty(required=True)
     description = ndb.TextProperty()
+    user_id = ndb.KeyProperty(kind=User)

@@ -56,7 +56,13 @@ Each `User` is keyed by their Google account ID (the ID token's `sub` claim),
 which never changes, unlike the account's email address. Signing in calls
 `User.get_or_insert`, so a user is created on their first sign-in and reused
 afterwards. `first_name` and `last_name` are left empty at sign-in and are
-always populated manually. Existing users are not updated on later sign-ins.
+entered by the user on `/enter-name`. Existing users are not updated on later
+sign-ins.
+
+After entering their name, the user is redirected to `/ghost-name-results`,
+which shows up to 3 randomly chosen unassigned ghost names, each formatted as
+first name, ghost name, last name (e.g. "Ada Casper Lovelace").
+`GhostName.user_id` links a ghost name to the user it is assigned to.
 
 ## Configuration
 
