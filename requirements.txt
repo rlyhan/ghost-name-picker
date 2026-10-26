@@ -3,4 +3,4 @@ https://github.com/google/gae-secure-scaffold-python3/archive/1.1.0.zip
 Flask-SeaSurf==2.0.0
 flask-talisman==1.1.0
 Authlib==1.9.1
-
+google-cloud-secret-manager==2.31.0

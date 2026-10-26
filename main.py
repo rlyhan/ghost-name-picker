@@ -5,6 +5,7 @@ import securescaffold
 from authlib.integrations import base_client
 from authlib.integrations import flask_client
 from google.cloud import ndb
+from werkzeug.middleware import proxy_fix
 
 import models
 
@@ -34,6 +35,9 @@ def ndb_wsgi_middleware(wsgi_app):
 
 
 app.wsgi_app = ndb_wsgi_middleware(app.wsgi_app)
+# App Engine terminates HTTPS at its front end and sets X-Forwarded-Proto;
+# trusting it makes url_for(_external=True) build https:// callback URLs.
+app.wsgi_app = proxy_fix.ProxyFix(app.wsgi_app, x_proto=1)
 
 
 @app.route("/")

@@ -65,14 +65,21 @@ and stores it in Datastore as an `AppConfig` entity.
 Sign-in uses Google's server-side OAuth flow via Authlib, so no Google
 JavaScript runs on the page and the scaffold's Content Security Policy is
 unchanged. Create an OAuth client ID (type "Web application") under Google
-Auth Platform → Clients, with this authorised redirect URI:
+Auth Platform → Clients, with these authorised redirect URIs:
 
 - `http://localhost:8080/auth/callback`
+- `https://<default-hostname>/auth/callback`, where the hostname comes from
+  `gcloud app describe --format="value(defaultHostname)"`
 
 The client ID is set as `GOOGLE_CLIENT_ID` in `settings.py`; it is not a
-secret. The client secret is read from the `GOOGLE_CLIENT_SECRET` environment
-variable when the app starts, so export it in the same terminal before
-starting the app. It must never be committed.
+secret. The client secret must never be committed:
+
+- **Locally**, it is read from the `GOOGLE_CLIENT_SECRET` environment variable
+  when the app starts, so export it in the same terminal before starting the
+  app.
+- **In production**, it is read from the Secret Manager secret
+  `google-client-secret`, which the App Engine service account needs
+  permission to access (see "Deploying").
 
 The OAuth consent screen's audience is External and in Testing, so only
 accounts listed under Audience → Test users can sign in.
@@ -110,6 +117,20 @@ emulator or production:
 
 ## Deploying
 
+Before the first deploy, store the OAuth client secret in Secret Manager and
+let the App Engine service account read it:
+
+```sh
+gcloud services enable secretmanager.googleapis.com
+printf '%s' "$GOOGLE_CLIENT_SECRET" | \
+  gcloud secrets create google-client-secret --data-file=-
+gcloud secrets add-iam-policy-binding google-client-secret \
+  --member="serviceAccount:<project-id>@appspot.gserviceaccount.com" \
+  --role="roles/secretmanager.secretAccessor"
+```
+
+Then deploy:
+
 ```sh
 gcloud app deploy
 ```
@@ -117,5 +138,6 @@ gcloud app deploy
 The production Datastore starts empty, so run the import against production
 after the first deploy.
 
-Sign-in does not work in production yet: the client secret is only provided
-locally, and the production redirect URI is not registered.
+To rotate the client secret, add a new version with
+`gcloud secrets versions add google-client-secret --data-file=-` and redeploy
+(or wait for new instances); the app reads the latest version on startup.
