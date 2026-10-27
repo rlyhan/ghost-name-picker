@@ -112,8 +112,25 @@ accounts listed under Audience → Test users can sign in.
 
 ```sh
 pip install -r requirements-dev.txt
-pylint main.py models.py import_ghost_names.py settings.py settings_dev.py
+pylint main.py models.py import_ghost_names.py settings.py settings_dev.py tests
 ```
+
+## Testing
+
+```sh
+pip install -r requirements-dev.txt
+pytest
+```
+
+The tests start their own in-memory Datastore emulator on a free port with a
+temporary data directory, so they don't need (or touch) the development
+emulator. Java and the emulator component must be installed (see "Running
+locally").
+
+`tests/routes/` checks the status code of every route, with one file per
+route group:
+
+- `test_overview.py`: the overview is public and returns `200`.
 
 ## Importing ghost names
 
