@@ -72,9 +72,7 @@ name. Choosing again releases the user's previous ghost name.
 The assignment is stored on both sides, as `GhostName.user_id` and
 `User.ghost_name`, so it can be checked and changed in a single transaction
 that reads every entity involved by key: a ghost name is never given to two
-users, and a user never holds two ghost names. (Queries can't be used for
-this check, because Datastore only allows ancestor queries inside
-transactions.)
+users, and a user never holds two ghost names.
 
 ## Configuration
 
