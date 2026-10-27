@@ -56,6 +56,19 @@ def test_auth_callback_success_redirects_to_overview(browser):
     assert user.email_address == "a@example.com"
 
 
+def test_sign_in_sets_secure_http_only_session_cookie(browser):
+    response = browser.sign_in("sub", "a@example.com")
+
+    cookie = next(
+        header
+        for header in response.headers.getlist("Set-Cookie")
+        if header.startswith("session=")
+    )
+    assert "Secure" in cookie
+    assert "HttpOnly" in cookie
+    assert "SameSite=Lax" in cookie
+
+
 def test_logout_without_csrf_token_returns_403(ada):
     assert ada.user() is not None
 

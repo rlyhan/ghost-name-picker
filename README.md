@@ -135,7 +135,8 @@ route group:
 - `test_overview.py`: the overview is public and returns `200`.
 - `test_auth.py`: `/login` redirects to Google when signed out and to the
   overview when signed in; `/auth/callback` returns `401` for a forged
-  `state` or unverified email without signing anyone in; `/logout` needs a
+  `state` or unverified email without signing anyone in, and sets a
+  `Secure`, `HttpOnly` session cookie on success; `/logout` needs a
   CSRF token (`403`) and signs the user out (`303`). Google sign-in is
   stubbed, so no OAuth secret or network sign-in is needed.
 
