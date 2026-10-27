@@ -139,6 +139,10 @@ route group:
   `Secure`, `HttpOnly` session cookie on success; `/logout` needs a
   CSRF token (`403`) and signs the user out (`303`). Google sign-in is
   stubbed, so no OAuth secret or network sign-in is needed.
+- `test_enter_name.py`: `/enter-name` redirects to sign-in when signed out;
+  without a CSRF token (`403`), with an empty name (`400`) or with a name over
+  100 characters (`400`) nothing is saved; a valid name is saved (trimmed)
+  and redirects to the results page (`303`).
 
 ## Importing ghost names
 
