@@ -143,6 +143,11 @@ route group:
   without a CSRF token (`403`), with an empty name (`400`) or with a name over
   100 characters (`400`) nothing is saved; a valid name is saved (trimmed)
   and redirects to the results page (`303`).
+- `test_ghost_name_results.py`: `/ghost-name-results` redirects to sign-in
+  when signed out and to `/enter-name` without a name; submitting nothing or
+  a ghost name that wasn't shown to the user returns `400`, and one already
+  taken by another user returns `409`, without assigning anything; a valid
+  choice is assigned on both sides and redirects to the overview (`303`).
 
 ## Importing ghost names
 
