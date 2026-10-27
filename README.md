@@ -88,7 +88,9 @@ and stores it in Datastore as an `AppConfig` entity.
 
 Sign-in uses Google's server-side OAuth flow via Authlib, so no Google
 JavaScript runs on the page and the scaffold's Content Security Policy is
-unchanged. Create an OAuth client ID (type "Web application") under Google
+unchanged. Visiting `/login` while already signed in redirects to the
+overview, so a session can't be silently switched to another Google account;
+to switch accounts, sign out first. Create an OAuth client ID (type "Web application") under Google
 Auth Platform → Clients, with these authorised redirect URIs:
 
 - `http://localhost:8080/auth/callback`
@@ -131,6 +133,11 @@ locally").
 route group:
 
 - `test_overview.py`: the overview is public and returns `200`.
+- `test_auth.py`: `/login` redirects to Google when signed out and to the
+  overview when signed in; `/auth/callback` returns `401` for a forged
+  `state` or unverified email without signing anyone in; `/logout` needs a
+  CSRF token (`403`) and signs the user out (`303`). Google sign-in is
+  stubbed, so no OAuth secret or network sign-in is needed.
 
 ## Importing ghost names
 

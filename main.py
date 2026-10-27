@@ -64,7 +64,9 @@ def root():
 
 @app.route("/login")
 def login():
-    """Redirects the user to Google to sign in."""
+    """Redirects the user to Google to sign in, unless already signed in."""
+    if signed_in_user():
+        return flask.redirect(flask.url_for("root"))
     redirect_uri = flask.url_for("auth_callback", _external=True)
     return google.authorize_redirect(redirect_uri)
 
