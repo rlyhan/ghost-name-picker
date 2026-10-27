@@ -149,6 +149,13 @@ route group:
   taken by another user returns `409`, without assigning anything; a valid
   choice is assigned on both sides and redirects to the overview (`303`).
 
+`tests/test_user_stories.py` checks what the user sees, following each
+requirement: signing in to get a Phantom Name, the name form and its error,
+up to 3 ghost names formatted as first name, ghost name, last name, picking
+one and seeing it (with the name and email of whoever took each) on the
+overview, changing it, and the message when all are taken. It also runs two
+users claiming the same ghost name at once and checks exactly one wins.
+
 ## Importing ghost names
 
 `import_ghost_names.py` loads ghost names from a CSV with `Ghost name` and
